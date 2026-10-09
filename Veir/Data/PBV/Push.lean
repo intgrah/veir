@@ -66,8 +66,8 @@ Operations without a push theorem (`—`) are abstracted as opaque variables by 
 | Shift left by `BitVec` (`<<<`)  | `BitVec.shiftLeft`           | `setWidth_shiftLeft`               |
 | Shift right by `Nat` (`>>>`)    | `BitVec.ushiftRight`         | `setWidth_ushiftRight'`            |
 | Shift right by `BitVec` (`>>>`) | `BitVec.ushiftRight`         | `setWidth_ushiftRight`             |
-| Arith shift right by `Nat`      | `BitVec.sshiftRight`         | —                                  |
-| Arith shift right by `BitVec`   | `BitVec.sshiftRight'`        | —                                  |
+| Arith shift right by `Nat`      | `BitVec.sshiftRight`         | `setWidth_sshiftRight`             |
+| Arith shift right by `BitVec`   | `BitVec.sshiftRight'`        | `setWidth_sshiftRight'`            |
 | Rotate left                     | `BitVec.rotateLeft`          | —                                  |
 | Rotate right                    | `BitVec.rotateRight`         | —                                  |
 | MSB                             | `BitVec.msb`                 | `msb_eq_and_signBitOfMask_ne_zero` |
@@ -200,20 +200,30 @@ theorem setWidth_ushiftRight' {o w : Nat} (h : w ≤ o) (a : BitVec w) (b : Nat)
 theorem setWidth_sshiftRight' {o w v: Nat} (hw : w ≤ o) (hv : v ≤ o) (a : BitVec w) (b : BitVec v) :
     (a.sshiftRight' b).setWidth o =
       bif a.msb
-      then (~~~((maskOfWidth o w) >>> (b.setWidth o)) ||| (a.setWidth o) >>> (b.setWidth o)) &&& maskOfWidth o w
+      then (~~~(((~~~a).setWidth o) >>> (b.setWidth o))) &&& maskOfWidth o w
       else (a.setWidth o) >>> (b.setWidth o) &&& maskOfWidth o w := by
-  sorry
-  -- refine setWidth_eq_and_maskOfWidth hw ?_
-  -- simp only [BitVec.sshiftRight_eq', BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le hv), Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le hw),
-  --   BitVec.toNat_sshiftRight, Nat.shiftRight_eq_div_pow, Nat.div_mod_eq_div a.isLt]
+  by_cases amsb : a.msb
+  · simp [amsb, BitVec.sshiftRight_eq_of_msb_true]
+    refine setWidth_eq_and_maskOfWidth hw ?_
+    simp only [BitVec.toNat_not, BitVec.toNat_ushiftRight, BitVec.toNat_setWidth, Nat.shiftRight_eq_div_pow]
+    have := Nat.div_le_self (2^w - 1 - a.toNat) (2^b.toNat)
+    have := Nat.pow_le_pow_right (n := 2) (by decide) hw
+    rw [Nat.mod_eq_of_lt (a := 2^w - 1 - a.toNat) (by lia), Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le hv),
+      Nat.sub_sub, Nat.two_pow_sub_mod_of_le hw (by lia), Nat.mod_eq_of_lt (by lia), ← Nat.sub_sub]
+  · simp only [BitVec.sshiftRight_eq', BitVec.sshiftRight_eq_of_msb_false (by simp [amsb] : a.msb = false), amsb,
+    BitVec.ushiftRight_eq', BitVec.toNat_setWidth, cond_eq_ite, Bool.false_eq_true, ↓reduceIte]
+    rw [setWidth_ushiftRight' hw, ← BitVec.ushiftRight_eq_ushiftRight_ofNatClamp (by exact Nat.lt_pow_self (a := 2) (by decide)),
+        Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le hv)]
 
 @[pbv_push]
-theorem setWidth_sshiftRight {o w b: Nat} (hw : w ≤ o) (a : BitVec w) :
-    (a.sshiftRight b).setWidth o = (a.sshiftRight' (BitVec.ofNatClamp o b)).setWidth o := by
-  sorry
-  -- refine setWidth_eq_and_maskOfWidth hw ?_
-  -- simp only [BitVec.sshiftRight_eq', BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le hv), Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le hw),
-  --   BitVec.toNat_sshiftRight, Nat.shiftRight_eq_div_pow, Nat.div_mod_eq_div a.isLt]
+theorem setWidth_sshiftRight {o w : Nat} (h : w ≤ o) (a : BitVec w) (b : Nat) :
+    (a.sshiftRight b).setWidth o =
+      bif a.msb
+      then ~~~(((~~~a).setWidth o) >>> (BitVec.ofNatClamp o b)) &&& maskOfWidth o w
+      else (a.setWidth o) >>> (BitVec.ofNatClamp o b) &&& maskOfWidth o w := by
+  have : w < 2^o := by lia [Nat.lt_two_pow_self]
+  rw [BitVec.sshiftRight_eq_sshiftRight'_ofNatClamp this, setWidth_sshiftRight' h (by exact Nat.le_refl o)]
+  simp [BitVec.setWidth_eq, BitVec.ushiftRight_eq', cond_eq_ite]
 
 /-- Sign extension fills above the source width `v` with the sign bit,
 and then masks to the target width. -/
