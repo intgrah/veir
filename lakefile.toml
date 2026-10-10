@@ -26,3 +26,8 @@ root = "AllocatorTests"
 [[lean_exe]]
 name = "ir-reuse-tests"
 root = "IRReuseTests"
+
+[[lean_exe]]
+name = "veir-parse"
+root = "VeirParse"
+
