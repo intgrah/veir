@@ -73,18 +73,18 @@ def main (args : List String) : IO UInt32 := do
         let stop ← IO.monoNanosNow
         IO.eprintln s!"lex time (s): {(stop - start).toFloat / 1000000000} ({count} tokens)"
       return 0
-    let mut last : Option (Buffed.IRBufContext × IR.Op) := none
+    let mut last : Option IRState.Result := none
     for _ in [0:args.repeatCount] do
       let start ← IO.monoNanosNow
       match parseSourceString content sourceName args.allowUnregisteredDialect with
       | .error err =>
         IO.eprintln err
         return 1
-      | .ok (ctx, op, _) =>
+      | .ok (result, _) =>
         let stop ← IO.monoNanosNow
         IO.eprintln s!"parse time (s): {(stop - start).toFloat / 1000000000}"
-        last := some (ctx, op)
+        last := some result
     if args.print then
-      if let some (ctx, op) := last then
-        PrintIR.printModule ctx op
+      if let some result := last then
+        PrintIR.printModule result.ctx result.op
     return 0
