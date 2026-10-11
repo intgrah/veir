@@ -118,6 +118,28 @@ theorem append
     region.Path ctx source target (blocks₁ ++ blocks₂.tail) := by
   induction left <;> grind [RegionPtr.Path]
 
+/-- Split a path at the first occurrence of a block, which does not occur in the prefix. -/
+theorem split_first_of_mem
+    (path : region.Path ctx source target blocks)
+    (hmem : block ∈ blocks) :
+    ∃ pre post,
+      blocks = pre ++ block :: post ∧
+      region.Path ctx source block (pre ++ [block]) ∧
+      region.Path ctx block target (block :: post) ∧
+      block ∉ pre := by
+  induction path with
+  | Single parent =>
+      exists [], []
+      grind [.Single]
+  | @Cons source next target blocks parent successor tail ih =>
+      by_cases same : source = block
+      · subst source
+        exists [], blocks
+        grind [.Single, .Cons]
+      · obtain ⟨pre, post, heq, prefixPath, suffixPath, absent⟩ := ih (by grind)
+        exists source :: pre, post
+        grind [.Cons]
+
 /-- Split a path at any block in its witness list, producing two paths meeting at `block`. -/
 theorem split_of_mem
     (path : region.Path ctx source target blocks)
@@ -126,18 +148,8 @@ theorem split_of_mem
       blocks = pre ++ block :: post ∧
       region.Path ctx source block (pre ++ [block]) ∧
       region.Path ctx block target (block :: post) := by
-  induction path with
-  | Single parent =>
-      exists [], []
-      grind [.Single]
-  | @Cons source next target blocks parent successor tail ih =>
-      simp only [List.mem_cons] at hmem
-      rcases hmem with _ | hmem
-      · exists [], blocks
-        grind [.Single, .Cons]
-      · obtain ⟨pre, post, heq, prefixPath, suffixPath⟩ := ih hmem
-        exists source :: pre, post
-        grind [.Cons]
+  obtain ⟨pre, post, blocksEq, prefixPath, suffixPath, _⟩ := path.split_first_of_mem hmem
+  exact ⟨pre, post, blocksEq, prefixPath, suffixPath⟩
 
 /-- Create a path from a known successor edge. -/
 theorem of_successor
