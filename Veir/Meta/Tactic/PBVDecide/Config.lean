@@ -15,6 +15,7 @@ structure PbvDecideConfig where
   bv_decide : Bool := true
   /-- Whether or not `grind` should be run on the generated side goals. -/
   grind : Bool := true
+  removentas : Bool := true
 
 declare_config_elab elabPbvDecideConfig PbvDecideConfig
 

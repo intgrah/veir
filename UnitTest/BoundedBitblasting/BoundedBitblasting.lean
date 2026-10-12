@@ -531,3 +531,7 @@ example {w v : Nat} (n : Nat) (x : BitVec w) (hwv : w ≤ v) (hv : v ≤ 4) :
 /-- SshiftRight by `w - 1` (encoded as v) equals negation of normal shift right -/
 example {w v : Nat} (a : BitVec w) (h : v + 1 = w) (hw : w ≤ 4):
   (a.sshiftRight v) = -(a >>> v) := by pbv_decide 8
+
+example (x y : BitVec w) (h : v ≤ 8) (hw : w < v):
+  (x == y) = (y.zeroExtend v == x.zeroExtend v) := by pbv_decide 8
+

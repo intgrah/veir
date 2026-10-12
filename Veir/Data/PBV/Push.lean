@@ -6,7 +6,7 @@ public meta import Veir.Meta.Tactic.PBVDecide.PBVPushSimp
 
 /-! # Rewriting a parametric expression into a concrete, single-width one.
 
-`eq_iff` introduces a `setWidth o` at the root of the goal, and the remaining
+`eq_setWidth` introduces a `setWidth o` at the root of the goal, and the remaining
 lemmas push it down towards the leaves, masking the result of every
 width-sensitive operation. See `Veir.Data.PBV` for more details.
 
@@ -18,8 +18,8 @@ Operations without a push theorem (`—`) are abstracted as opaque variables by 
 
 | Operation                       | `BitVec` definition          | Push theorem                       |
 |---------------------------------|------------------------------|------------------------------------|
-| Equality (`=`)                  | `Eq`                         | `eq_iff`                           |
-| Bool equality (`==`)            | `BEq`                        | —                                  |
+| Equality (`=`)                  | `Eq`                         | `eq_setWidth`                      |
+| Bool equality (`==`)            | `BEq`                        | `beq_setWidth`                     |
 | Unsigned `<`                    | `BitVec.ult`                 | —                                  |
 | Unsigned `≤`                    | `BitVec.ule`                 | —                                  |
 | Signed `<`                      | `BitVec.slt`                 | —                                  |
@@ -101,10 +101,35 @@ attribute [pbv_push low] BitVec.setWidth_eq
 being used in the proof.
 -/
 @[pbv_lift]
-theorem eq_iff (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+theorem eq_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
     (a = b) = (a.setWidth o = b.setWidth o) := by
   apply propext
   exact ⟨fun hab => hab ▸ rfl, fun hab => BitVec.setWidth_inj h hab⟩
+
+@[pbv_lift]
+theorem beq_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+  (a == b) = (a.setWidth o == b.setWidth o) := by
+  grind [BitVec.setWidth_inj]
+
+@[pbv_lift]
+theorem lt_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a < b) = (a.setWidth o < b.setWidth o) := by
+  simp only [BitVec.lt_def, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
+
+@[pbv_lift]
+theorem ult_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a.ult b) = (a.setWidth o).ult (b.setWidth o) := by
+  simp only [BitVec.ult_eq_decide, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
+
+@[pbv_lift]
+theorem le_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a ≤ b) = (a.setWidth o ≤ b.setWidth o) := by
+  simp only [BitVec.le_def, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
+
+@[pbv_lift]
+theorem ule_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a.ule b) = (a.setWidth o).ule (b.setWidth o) := by
+  simp only [BitVec.ule_eq_decide, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
 
 /-! ## Pushing `setWidth o` towards the leaves — leaves and width changes -/
 

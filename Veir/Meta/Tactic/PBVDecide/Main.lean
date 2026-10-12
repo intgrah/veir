@@ -585,7 +585,7 @@ meta def introMaskedBitvectors (bvs : BitVecFVarsToRevert) (g : MVarId)
     introBitvecFVarUnchecked widthInfos g bvInfos bvFvarId widthTm
 
 /--
-Add `eq_iff` with the blast width pre-filled, which lifts equalities to the
+Add `eq_setWidth` with the blast width pre-filled, which lifts equalities to the
 blast width by wrapping both sides in a `setWidth`.
 -/
 meta def addEqIff (g : MVarId) (blastWidth : Nat) (simp : SimpTheoremsArray) :
@@ -675,7 +675,7 @@ meta def pbvTranslate (g : MVarId) (ctx : PbvDecideContext) : MetaM (MVarId × L
   let (g, widthInfos) ← widthProps.translateToMask g widthInfos
   -- Intro the `BitVec`s
   let (g, bvInfos) ← introMaskedBitvectors bvsToRevert g widthInfos
-  -- Lift equalities to the blast width. A single pass applies `eq_iff` once:
+  -- Lift equalities to the blast width. A single pass applies `eq_setWidth` once:
   -- otherwise the lifted equality, now at the blast width, gets lifted again.
   let eqThms ← addEqIff g blastWidth <| ← addWidthInfosSimpLemmas g widthInfos #[]
   let g ← applySimp g eqThms { decide := false, singlePass := true }
@@ -686,7 +686,7 @@ meta def pbvTranslate (g : MVarId) (ctx : PbvDecideContext) : MetaM (MVarId × L
   -- Run simp
   let g ← applySimp g thms
   -- Drop references to `Nat` width variables
-  let g ← dropNatReferences g widthInfos
+  let g ← if ctx.config.removentas then dropNatReferences g widthInfos else pure g
   -- Run grind on subgoals
   let subgoals := widthInfos.infos.values.map (·.hypWidthLeBoundMVarId) |> .reduceOption
   return (g, subgoals, widthInfos, bvInfos)
