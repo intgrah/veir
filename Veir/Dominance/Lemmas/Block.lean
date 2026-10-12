@@ -32,7 +32,7 @@ theorem mem_of_path
   exact everyPath entryBlock blocks entry path
 
 /-- A proper SSA dominator of a locally reachable block is locally reachable. -/
-theorem locallyReachable_of_dominated
+theorem locallyReachable_dominator_of_locallyReachable_dominated
     (dominance : dominator.ProperlyDominatesInSSACFGRegion dominated region ctx)
     (reachable : dominated.LocallyReachable region ctx) :
     dominator.LocallyReachable region ctx := by
@@ -41,7 +41,7 @@ theorem locallyReachable_of_dominated
   exact BlockPtr.LocallyReachable.of_path entry prefixPath
 
 /-- Proper SSA dominance cannot hold in both directions when the target is locally reachable. -/
-theorem not_reverse_of_reachable
+theorem not_dominated_of_locallyReachable_dominated
     (dominance : dominator.ProperlyDominatesInSSACFGRegion dominated region ctx)
     (reachable : dominated.LocallyReachable region ctx) :
     ¬ dominated.ProperlyDominatesInSSACFGRegion dominator region ctx := by
@@ -72,7 +72,8 @@ theorem trans_of_reachable
   have distinct : dominator ≠ dominated := by
     intro same
     subst dominated
-    exact first.not_reverse_of_reachable (second.locallyReachable_of_dominated reachable) second
+    exact first.not_dominated_of_locallyReachable_dominated
+      (second.locallyReachable_dominator_of_locallyReachable_dominated reachable) second
   refine ⟨first.1, second.2.1, first.2.2.1, distinct, ?_⟩
   intro entryBlock blocks entry path
   obtain ⟨pre, post, split, prefixPath, _⟩ :=
@@ -202,14 +203,15 @@ theorem BlockPtr.HierarchicallyReachable.of_same_region {source target : BlockPt
     exact reachable ancestor targetAncestry ancestorRegion parent
 
 /-- A proper SSA dominator of a hierarchically reachable block is hierarchically reachable. -/
-theorem BlockPtr.ProperlyDominatesInSSACFGRegion.hierarchicallyReachable_of_dominated
+theorem BlockPtr.ProperlyDominatesInSSACFGRegion.hierarchicallyReachable_dominator_of_hierarchicallyReachable_dominated
     {dominator dominated : BlockPtr}
     (dominance : dominator.ProperlyDominatesInSSACFGRegion dominated region ctx)
     (reachable : dominated.HierarchicallyReachable ctx) :
     dominator.HierarchicallyReachable ctx := by
   have localReachable := reachable.locallyReachable dominance.2.1
   exact reachable.of_same_region
-    (dominance.locallyReachable_of_dominated localReachable) dominance.2.1
+    (dominance.locallyReachable_dominator_of_locallyReachable_dominated localReachable)
+    dominance.2.1
 
 /-! ## Dominance at block insertion points -/
 
