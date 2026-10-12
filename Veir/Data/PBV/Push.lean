@@ -20,10 +20,12 @@ Operations without a push theorem (`—`) are abstracted as opaque variables by 
 |---------------------------------|------------------------------|------------------------------------|
 | Equality (`=`)                  | `Eq`                         | `eq_setWidth`                      |
 | Bool equality (`==`)            | `BEq`                        | `beq_setWidth`                     |
-| Unsigned `<`                    | `BitVec.ult`                 | —                                  |
-| Unsigned `≤`                    | `BitVec.ule`                 | —                                  |
-| Signed `<`                      | `BitVec.slt`                 | —                                  |
-| Signed `≤`                      | `BitVec.sle`                 | —                                  |
+| `<`                             | `BitVec.lt`                  | `lt_setWidth`                     |
+| `≤`                             | `BitVec.le`                  | `le_setWidth`                     |
+| Unsigned `<`                    | `BitVec.ult`                 | `ult_setWidth`                     |
+| Unsigned `≤`                    | `BitVec.ule`                 | `ule_setWidth`                     |
+| Signed `<`                      | `BitVec.slt`                 | `slt_setWidth`                     |
+| Signed `≤`                      | `BitVec.sle`                 | `sle_setWidth`                     |
 | Literal (`n#w`)                 | `BitVec.ofNat`               | `setWidth_ofNat`                   |
 | Zero (`0#w`)                    | `BitVec.zero`                | `BitVec.setWidth_zero`             |
 | All ones                        | `BitVec.allOnes`             | —                                  |
@@ -117,19 +119,29 @@ theorem lt_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
   simp only [BitVec.lt_def, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
 
 @[pbv_lift]
-theorem ult_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
-    (a.ult b) = (a.setWidth o).ult (b.setWidth o) := by
-  simp only [BitVec.ult_eq_decide, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
-
-@[pbv_lift]
 theorem le_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
     (a ≤ b) = (a.setWidth o ≤ b.setWidth o) := by
   simp only [BitVec.le_def, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
 
 @[pbv_lift]
+theorem ult_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a.ult b) = (a.setWidth o).ult (b.setWidth o) := by
+  simp only [BitVec.ult_eq_decide, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
+
+@[pbv_lift]
 theorem ule_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
     (a.ule b) = (a.setWidth o).ule (b.setWidth o) := by
   simp only [BitVec.ule_eq_decide, BitVec.toNat_setWidth, Nat.mod_eq_of_lt (BitVec.toNat_lt_twoPow_of_le h)]
+
+@[pbv_lift]
+theorem slt_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a.slt b) = (a.msb != b.msb).xor ((a.setWidth o).ult (b.setWidth o)) := by
+  rw [BitVec.slt_eq_ult, ← ult_setWidth o h]
+
+@[pbv_lift]
+theorem sle_setWidth (o : Nat) {w : Nat} (h : w ≤ o) (a b : BitVec w) :
+    (a.sle b) = (a.msb != b.msb).xor ((a.setWidth o).ule (b.setWidth o)) := by
+  rw [BitVec.sle_eq_ule, ← ule_setWidth o h]
 
 /-! ## Pushing `setWidth o` towards the leaves — leaves and width changes -/
 

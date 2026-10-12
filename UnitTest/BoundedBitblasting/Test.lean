@@ -49,7 +49,6 @@ example {w v : Nat} (x y : BitVec w) (hwv : w ≤ v) (hv : v ≤ 4) :
     (x.zeroExtend v).ule (y.zeroExtend v) = x.ule y := by
   pbv_decide 4
 
-
 /-- Signed less-than is irreflexive -/
 example {w : Nat} (x : BitVec w) (hw : w ≤ 4) :
     x.slt x = false := by
