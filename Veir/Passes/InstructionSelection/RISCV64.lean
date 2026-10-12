@@ -240,7 +240,7 @@ private def bitWidth (value : BitVec 64) : Nat :=
   user, including a gMIR or LLVM operation that has not been selected yet, is assumed to read all
   bits. `depth` bounds the recursion, as LLVM's `MaxRecursionDepth`.
 -/
-def hasAllNBitUsers (ctx : IRContext OpCode) (value : ValuePtr) (bits : Nat) :
+def d (ctx : IRContext OpCode) (value : ValuePtr) (bits : Nat) :
     (depth : Nat := 6) → Bool
   | 0 => false
   | depth + 1 => (usesThroughCasts ctx value).all fun (user, index) =>
