@@ -2,6 +2,7 @@ module
 
 public import Veir.IR.OpInfo
 public import Veir.Dialects.Pancake.Properties
+public import Veir.Dialects.Pancake.Scalar
 public import Veir.Verifier.Basic
 meta import Veir.Meta.OpCode
 
@@ -15,10 +16,10 @@ https://github.com/flamingoponderado/flapjack/tree/65fb1aa2d846adc590677994ccf92
 
 Constructor names use snake_case in the textual dialect (`ite` stays `ite`).
 Names, shapes, operator selectors, and call metadata are validated and preserved
-as properties. Recursive expression/program children belong to the IR rather
-than the property dictionary. These definitions do not implement a translation
-from Flapjack, Pancake's type checking, evaluation, or lowering, and do not claim
-that expressions are safe to discard or speculate.
+as properties. Constants, word operations, multiplication, and comparisons use
+positive-width signless integers and have checked SSA signatures. The remaining
+operations still have syntax-level definitions only. Translation of Flapjack
+programs, structured execution, and lowering are separate work.
 -/
 
 @[opcodes]
@@ -122,6 +123,31 @@ def Pancake.toAttrDict
     Std.HashMap ByteArray Attribute :=
   Std.HashMap.ofList props.entries.toList
 
+/-- Look up a property without decoding its byte-string value. -/
+@[expose]
+def Pancake.property? (props : DictionaryAttr) (key : String) : Option Attribute :=
+  props.entries.findSome? fun (name, value) =>
+    if name = key.toUTF8 then some value else none
+
+/-- Decode precisely the executable scalar subset. Other operations stay unsupported. -/
+@[expose]
+def Pancake.scalarOperation? (opType : Pancake) (props : Pancake.propertiesOf opType) :
+    Option PancakeScalar.Operation := do
+  match opType with
+  | .const =>
+    let some (.integerAttr value) := Pancake.property? props "value" | none
+    return .constant value
+  | .op =>
+    let some (.stringAttr operator) := Pancake.property? props "operator" | none
+    return .binop (← PancakeScalar.parseBinOp operator.value)
+  | .panop =>
+    let some (.stringAttr operator) := Pancake.property? props "operator" | none
+    if operator.value = "mul".toUTF8 then some .multiply else none
+  | .cmp =>
+    let some (.stringAttr operator) := Pancake.property? props "operator" | none
+    return .compare (← PancakeScalar.parseCmp operator.value)
+  | _ => none
+
 /-- Remain conservative until Pancake's execution semantics are implemented. -/
 @[get_effects]
 def Pancake.getEffects
@@ -154,13 +180,37 @@ instance : IsOpCode Pancake where
   fromAttrDict := Pancake.fromAttrDict
   toAttrDict := Pancake.toAttrDict
 
-/-- Also check properties of operations created directly through the rewriter. -/
+/-- Check scalar signatures as well as properties of directly constructed operations. -/
 @[expose]
 def Pancake.verifyLocalInvariants {OpInfo : Type} [IsOpCode OpInfo]
     [HasDialect OpInfo Pancake] (opType : Pancake) (operation : OperationPtr)
-    (ctx : WfIRContext OpInfo) (_opIn : operation.InBounds ctx.raw) : Except String PUnit := do
+    (ctx : WfIRContext OpInfo) (opIn : operation.InBounds ctx.raw) : Except String PUnit := do
   let props : Pancake.propertiesOf opType := operation.getProperties! ctx.raw opType
   let _ ← Pancake.fromAttrDict opType (Pancake.toAttrDict opType props)
+  match opType with
+  | .const | .op | .panop | .cmp =>
+    let instrName := String.fromUTF8! (Pancake.name opType)
+    let some scalar := Pancake.scalarOperation? opType props
+      | throw s!"{instrName}: invalid scalar properties"
+    let count := match scalar with
+      | .constant _ => 0
+      | .binop .sub | .multiply | .compare _ => 2
+      | .binop _ => operation.getNumOperands ctx.raw opIn
+    operation.verifyPlainOpCounts ctx opIn count 1
+    let resultType := ((operation.getResult 0).get! ctx.raw).type
+    let .integerType wordType := resultType.val
+      | throw s!"{instrName}: expected a signless integer result"
+    if wordType.bitwidth == 0 || wordType.signedness != .signless then
+      throw s!"{instrName}: expected a nonzero-width signless integer result"
+    for operandType in operation.getOperandTypes! ctx.raw do
+      if operandType.val != resultType.val then
+        throw s!"{instrName}: operand types must match the result word type"
+    match scalar with
+    | .constant value =>
+      if value.type != wordType then
+        throw s!"{instrName}: constant property type must match the result word type"
+    | _ => pure ()
+  | _ => pure ()
 
 instance : HasOpInfo Pancake where
   verifyLocalInvariants := Pancake.verifyLocalInvariants

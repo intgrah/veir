@@ -79,7 +79,7 @@ private def callProperties (info : Attribute) : Std.HashMap ByteArray Attribute 
     (Pancake.toAttrDict .call returningProps)["info".toUTF8]?
 #guard !((Pancake.fromAttrDict .call (callProperties (.dictionaryAttr DictionaryAttr.empty))).isOk)
 
-/- Until there are execution semantics, optimizations must preserve source operations. -/
+/- Effects remain conservative while stateful execution semantics are incomplete. -/
 #guard OpCode.getEffects (.pancake .load) DictionaryAttr.empty == .unknown
 #guard OpCode.getEffects (.pancake .call) DictionaryAttr.empty == .unknown
 #guard !OpCode.isConstantLike (.pancake .const)
