@@ -27,6 +27,7 @@ public import Veir.Dialects.PDL.OpInfo
 public import Veir.Dialects.IO.OpInfo
 public import Veir.Dialects.GMIR.OpInfo
 public import Veir.Dialects.Test.OpInfo
+public import Veir.Dialects.Pancake.OpInfo
 public import Veir.Dialects.LLZK.Felt.OpInfo
 public import Veir.Dialects.LLZK.Include.OpInfo
 public import Veir.Dialects.LLZK.Function.OpInfo

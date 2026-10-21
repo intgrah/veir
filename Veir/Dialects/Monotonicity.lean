@@ -17,7 +17,7 @@ it knows nothing about.
 namespace Veir
 
 instance (priority := low) (opType : OpCode) : InterpretOp'Monotone opType := by
-  cases opType <;> rename_i op <;> cases op <;>
+  cases opType <;> rename_i dialectOp <;> cases dialectOp <;>
     first
       | infer_instance
       | exact interpretOp'_monotone_assumed _

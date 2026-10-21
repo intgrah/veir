@@ -36,6 +36,7 @@ match opCode with
 | .io op => Io.propertiesOf op
 | .gmir op => GMIR.propertiesOf op
 | .test op => Test.propertiesOf op
+| .pancake opType => Pancake.propertiesOf opType
 | .felt op => Felt.propertiesOf op
 | .cir op => Cir.propertiesOf op
 | .include op => LLZK.Include.propertiesOf op
@@ -67,6 +68,7 @@ def OpCode.getEffects (opCode : OpCode) (props : _propertiesOf opCode) : MemoryE
   | .io op, props => Io.getEffects op props
   | .gmir op, props => GMIR.getEffects op props
   | .test op, props => Test.getEffects op props
+  | .pancake opType, props => Pancake.getEffects opType props
   | .felt op, props => Felt.getEffects op props
   | .cir op, props => Cir.getEffects op props
   | .include op, props => LLZK.Include.getEffects op props
@@ -96,6 +98,7 @@ def OpCode.tryFold (opCode : OpCode) (props : _propertiesOf opCode)
   | .io op, props => HasOpInfo.tryFold op props resultTypes constantOperands
   | .gmir op, props => HasOpInfo.tryFold op props resultTypes constantOperands
   | .test op, props => HasOpInfo.tryFold op props resultTypes constantOperands
+  | .pancake opType, props => HasOpInfo.tryFold opType props resultTypes constantOperands
   | .felt op, props => HasOpInfo.tryFold op props resultTypes constantOperands
   | .cir op, props => HasOpInfo.tryFold op props resultTypes constantOperands
   | .include op, props => HasOpInfo.tryFold op props resultTypes constantOperands
@@ -125,6 +128,7 @@ def OpCode.getRegionKind (opCode : OpCode) (index : Nat) : RegionKind :=
   | .io op => HasOpInfo.getRegionKind op index
   | .gmir op => HasOpInfo.getRegionKind op index
   | .test op => HasOpInfo.getRegionKind op index
+  | .pancake opType => HasOpInfo.getRegionKind opType index
   | .felt op => HasOpInfo.getRegionKind op index
   | .cir op => HasOpInfo.getRegionKind op index
   | .include op => HasOpInfo.getRegionKind op index
@@ -155,6 +159,7 @@ def OpCode.hasSSADominance (opCode : OpCode) (index : Nat) : Bool :=
   | .io op => Io.hasSSADominance op index
   | .gmir op => GMIR.hasSSADominance op index
   | .test op => Test.hasSSADominance op index
+  | .pancake opType => Pancake.hasSSADominance opType index
   | .felt op => Felt.hasSSADominance op index
   | .cir op => Cir.hasSSADominance op index
   | .include op => LLZK.Include.hasSSADominance op index
@@ -186,6 +191,7 @@ def OpCode.hasNoTerminator (opCode : OpCode) (index : Nat) : Bool :=
   | .io op => HasOpInfo.hasNoTerminator op index
   | .gmir op => HasOpInfo.hasNoTerminator op index
   | .test op => HasOpInfo.hasNoTerminator op index
+  | .pancake opType => HasOpInfo.hasNoTerminator opType index
   | .felt op => HasOpInfo.hasNoTerminator op index
   | .cir op => HasOpInfo.hasNoTerminator op index
   | .include op => HasOpInfo.hasNoTerminator op index
@@ -213,6 +219,7 @@ def OpCode.isIsolatedFromAbove (opCode : OpCode) : Bool :=
   | .io op => HasOpInfo.isIsolatedFromAbove op
   | .gmir op => HasOpInfo.isIsolatedFromAbove op
   | .test op => HasOpInfo.isIsolatedFromAbove op
+  | .pancake opType => HasOpInfo.isIsolatedFromAbove opType
   | .felt op => HasOpInfo.isIsolatedFromAbove op
   | .cir op => HasOpInfo.isIsolatedFromAbove op
   | .include op => HasOpInfo.isIsolatedFromAbove op
@@ -240,6 +247,7 @@ def OpCode.isSymbolTable (opCode : OpCode) : Bool :=
   | .io op => HasOpInfo.isSymbolTable op
   | .gmir op => HasOpInfo.isSymbolTable op
   | .test op => HasOpInfo.isSymbolTable op
+  | .pancake opType => HasOpInfo.isSymbolTable opType
   | .felt op => HasOpInfo.isSymbolTable op
   | .cir op => HasOpInfo.isSymbolTable op
   | .include op => HasOpInfo.isSymbolTable op
@@ -271,6 +279,7 @@ def OpCode.isTerminator (opCode : OpCode) : Bool :=
   | .io op => HasOpInfo.isTerminator op
   | .gmir op => HasOpInfo.isTerminator op
   | .test op => HasOpInfo.isTerminator op
+  | .pancake opType => HasOpInfo.isTerminator opType
   | .felt op => HasOpInfo.isTerminator op
   | .cir op => HasOpInfo.isTerminator op
   | .include op => HasOpInfo.isTerminator op
@@ -305,6 +314,7 @@ def OpCode.isConstantLike (opCode : OpCode) : Bool :=
   | .io op => Io.isConstantLike op
   | .gmir op => GMIR.isConstantLike op
   | .test op => Test.isConstantLike op
+  | .pancake opType => Pancake.isConstantLike opType
   | .felt op => Felt.isConstantLike op
   | .cir op => Cir.isConstantLike op
   | .include op => LLZK.Include.isConstantLike op
@@ -335,6 +345,7 @@ def OpCode.propagatesPoison (opCode : OpCode) : Bool :=
   | .io op => HasOpInfo.propagatesPoison op
   | .gmir op => HasOpInfo.propagatesPoison op
   | .test op => HasOpInfo.propagatesPoison op
+  | .pancake opType => HasOpInfo.propagatesPoison opType
   | .felt op => HasOpInfo.propagatesPoison op
   | .cir op => HasOpInfo.propagatesPoison op
   | .include op => HasOpInfo.propagatesPoison op
@@ -362,6 +373,7 @@ def Properties.fromAttrDict (opCode : OpCode) (attrDict : Std.HashMap ByteArray 
   | .io op => Io.fromAttrDict op attrDict
   | .gmir op => GMIR.fromAttrDict op attrDict
   | .test op => Test.fromAttrDict op attrDict
+  | .pancake opType => Pancake.fromAttrDict opType attrDict
   | .felt op => Felt.fromAttrDict op attrDict
   | .cir op => Cir.fromAttrDict op attrDict
   | .include op => LLZK.Include.fromAttrDict op attrDict
@@ -393,6 +405,7 @@ def Properties.toAttrDict
   | .io op, props => Io.toAttrDict op props
   | .gmir op, props => GMIR.toAttrDict op props
   | .test op, props => Test.toAttrDict op props
+  | .pancake opType, props => Pancake.toAttrDict opType props
   | .felt op, props => Felt.toAttrDict op props
   | .cir op, props => Cir.toAttrDict op props
   | .include op, props => LLZK.Include.toAttrDict op props
@@ -427,6 +440,7 @@ def OpCode.symbolInterface? (opCode : OpCode) : Option (SymbolOpInterface (_prop
   | .io op => HasOpInfo.symbolInterface? op
   | .gmir op => HasOpInfo.symbolInterface? op
   | .test op => HasOpInfo.symbolInterface? op
+  | .pancake opType => HasOpInfo.symbolInterface? opType
   | .felt op => HasOpInfo.symbolInterface? op
   | .cir op => HasOpInfo.symbolInterface? op
   | .include op => HasOpInfo.symbolInterface? op
@@ -454,6 +468,7 @@ def OpCode.functionInterface? (opCode : OpCode) : Option (FunctionOpInterface (_
   | .io op => HasOpInfo.functionInterface? op
   | .gmir op => HasOpInfo.functionInterface? op
   | .test op => HasOpInfo.functionInterface? op
+  | .pancake opType => HasOpInfo.functionInterface? opType
   | .felt op => HasOpInfo.functionInterface? op
   | .cir op => HasOpInfo.functionInterface? op
   | .include op => HasOpInfo.functionInterface? op
@@ -496,6 +511,7 @@ def OpCode.branchOpInterface?
   | .io op => HasOpInfo.branchOpInterface? op
   | .gmir op => HasOpInfo.branchOpInterface? op
   | .test op => HasOpInfo.branchOpInterface? op
+  | .pancake opType => HasOpInfo.branchOpInterface? opType
   | .felt op => HasOpInfo.branchOpInterface? op
   | .cir op => HasOpInfo.branchOpInterface? op
   | .include op => HasOpInfo.branchOpInterface? op
@@ -543,6 +559,7 @@ def OpCode.verifyLocalInvariants (opCode : OpCode) (op : OperationPtr)
   | .cf opType => Cf.verifyLocalInvariants opType op ctx opIn
   | .pdl opType => PDL.verifyLocalInvariants opType op ctx opIn
   | .test .test => pure ()
+  | .pancake opType => Pancake.verifyLocalInvariants opType op ctx opIn
   | .llvm opType => Llvm.verifyLocalInvariants opType op ctx opIn
   | .mod_arith opType => Mod_Arith.verifyLocalInvariants opType op ctx opIn
   | .riscv opType => Riscv.verifyLocalInvariants opType op ctx opIn
@@ -601,7 +618,7 @@ def OpCode.materializeConstant (opCode : OpCode) (value : RuntimeValue)
     | .riscv_cf _ | .riscv_stack _ | .rv64 _ | .cf _ | .builtin _
     | .verif _
     | .func _ | .datapath _ | .pdl _ | .test _ | .cir _ | .io _ | .include _
-    | .function _ | .seq _ | .gmir _ => none
+    | .function _ | .seq _ | .gmir _ | .pancake _ => none
   guard materialized.fst.isConstantLike
   return materialized
 
