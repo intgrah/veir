@@ -7,6 +7,7 @@ public import Veir.IR.WellFormed
 public import Veir.GlobalOpInfo
 public import Veir.DataLayout.RISCV64
 public import Veir.Data.Felt
+public import Veir.Dialects.Pancake.Interpreter
 
 import Veir.Data.Comb.Basic
 import Veir.Data.HW.Basic
@@ -45,6 +46,8 @@ def interpretOp' (opType : OpCode) (properties : propertiesOf opType)
     (mem : MemoryState) (layout : DataLayout := .riscv64)
     : Interp ((Array RuntimeValue) × MemoryState × Option ControlFlowAction) :=
   match opType with
+  | .pancake pancakeOp =>
+    Pancake.interpretOp' pancakeOp properties resultTypes operands blockOperands mem
   | .arith arithOp => do
     let (vals, act) ← Arith.interpretOp' arithOp properties resultTypes operands blockOperands
     return (vals, mem, act)

@@ -2,6 +2,7 @@ module
 
 public import Veir.Dialects.LLVM.Monotonicity
 public import Veir.Dialects.RISCV.Monotonicity
+public import Veir.Dialects.Pancake.Monotonicity
 
 public section
 
@@ -17,7 +18,7 @@ it knows nothing about.
 namespace Veir
 
 instance (priority := low) (opType : OpCode) : InterpretOp'Monotone opType := by
-  cases opType <;> rename_i op <;> cases op <;>
+  cases opType <;> rename_i dialectOp <;> cases dialectOp <;>
     first
       | infer_instance
       | exact interpretOp'_monotone_assumed _
