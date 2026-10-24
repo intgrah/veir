@@ -5,7 +5,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "3e1c809560ee78de43949de9540aae6293e0e53d",
+   "rev": "8d32010cff81e87c6905312fdbd42a4b534c84af",
    "name": "Flapjack",
    "manifestFile": "lake-manifest.json",
    "inputRev": "lean-v4.35.0-rc4",
